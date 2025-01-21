@@ -2,18 +2,18 @@ import { CredentialsProvider } from '@aws/language-server-runtimes/server-interf
 import { Result } from '../types'
 import { ChatSessionService, ChatSessionServiceConfig } from './chatSessionService'
 
-export class ChatSessionManagementService {
-    static #instance?: ChatSessionManagementService
-    #sessionByTab: Map<string, ChatSessionService> = new Map<string, any>()
+export class ChatSessionManagementService<T = {}> {
+    static #instance?: ChatSessionManagementService<any>
+    #sessionByTab: Map<string, ChatSessionService<T>> = new Map<string, ChatSessionService<T>>()
     #credentialsProvider?: CredentialsProvider
     #clientConfig?: ChatSessionServiceConfig | (() => ChatSessionServiceConfig) = {}
     #customUserAgent?: string = '%Amazon-Q-For-LanguageServers%'
     #codeWhispererRegion?: string
     #codeWhispererEndpoint?: string
 
-    public static getInstance() {
+    public static getInstance<T = {}>(): ChatSessionManagementService<T> {
         if (!ChatSessionManagementService.#instance) {
-            ChatSessionManagementService.#instance = new ChatSessionManagementService()
+            ChatSessionManagementService.#instance = new ChatSessionManagementService<T>()
         }
 
         return ChatSessionManagementService.#instance
@@ -57,7 +57,7 @@ export class ChatSessionManagementService {
         return this.#sessionByTab.has(tabId)
     }
 
-    public createSession(tabId: string): Result<ChatSessionService, string> {
+    public createSession(tabId: string): Result<ChatSessionService<T>, string> {
         if (!this.#credentialsProvider) {
             return {
                 success: false,
@@ -81,7 +81,7 @@ export class ChatSessionManagementService {
         }
 
         const clientConfig = typeof this.#clientConfig === 'function' ? this.#clientConfig() : this.#clientConfig
-        const newSession = new ChatSessionService(
+        const newSession = new ChatSessionService<T>(
             this.#credentialsProvider,
             this.#codeWhispererRegion,
             this.#codeWhispererEndpoint,
@@ -99,7 +99,7 @@ export class ChatSessionManagementService {
         }
     }
 
-    public getSession(tabId: string): Result<ChatSessionService, string> {
+    public getSession(tabId: string): Result<ChatSessionService<T>, string> {
         const session = this.#sessionByTab.get(tabId)
 
         return session ? { success: true, data: session } : this.createSession(tabId)

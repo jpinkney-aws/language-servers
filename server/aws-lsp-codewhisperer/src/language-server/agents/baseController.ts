@@ -27,15 +27,15 @@ import { ChatTelemetryController } from '../chat/telemetry/chatTelemetryControll
 
 type ChatHandlers = LspHandlers<Chat>
 
-export abstract class BaseController implements ChatHandlers {
+export abstract class BaseController<T> implements ChatHandlers {
     protected features: Features
-    protected chatSessionManagementService: ChatSessionManagementService
+    protected chatSessionManagementService: ChatSessionManagementService<T>
     protected customizationArn?: string
     protected telemetryController: ChatTelemetryController
     protected telemetryService: TelemetryService
 
     constructor(
-        chatSessionManagementService: ChatSessionManagementService,
+        chatSessionManagementService: ChatSessionManagementService<T>,
         features: Features,
         telemetryService: TelemetryService
     ) {

@@ -28,7 +28,7 @@ import { HELP_MESSAGE } from './constants'
 import { TelemetryService } from '../telemetryService'
 import { BaseController } from '../agents/baseController'
 
-export class ChatController extends BaseController {
+export class ChatController extends BaseController<{}> {
     #telemetryController: ChatTelemetryController
     #triggerContext: QChatTriggerContext
     #customizationArn?: string

@@ -9,7 +9,7 @@ import { CredentialsProvider } from '@aws/language-server-runtimes/server-interf
 import { getBearerTokenFromProvider } from '../utils'
 
 export type ChatSessionServiceConfig = CodeWhispererStreamingClientConfig
-export class ChatSessionService {
+export class ChatSessionService<T = {}> {
     public shareCodeWhispererContentWithAWS = false
     readonly #codeWhispererRegion: string
     readonly #codeWhispererEndpoint: string
@@ -17,6 +17,7 @@ export class ChatSessionService {
     #credentialsProvider: CredentialsProvider
     #config?: CodeWhispererStreamingClientConfig
     #conversationId?: string
+    #state?: T
 
     public get conversationId(): string | undefined {
         return this.#conversationId
@@ -24,6 +25,10 @@ export class ChatSessionService {
 
     public set conversationId(value: string | undefined) {
         this.#conversationId = value
+    }
+
+    public get state(): T | undefined {
+        return this.#state
     }
 
     constructor(
