@@ -4,6 +4,7 @@ import {
     CodeWhispererSecurityScanServerTokenProxy,
     CodeWhispererServerTokenProxy,
     QChatServerProxy,
+    FeatureDevServerProxy,
     QConfigurationServerTokenProxy,
     QNetTransformServerTokenProxy,
 } from '@aws/lsp-codewhisperer/out/language-server/proxy-server'
@@ -21,6 +22,7 @@ const props: RuntimeProps = {
         QConfigurationServerTokenProxy,
         QNetTransformServerTokenProxy,
         QChatServerProxy,
+        FeatureDevServerProxy,
     ],
     name: 'AWS CodeWhisperer',
 }

@@ -21,7 +21,7 @@ import { CancellationTokenSource, LanguageClient } from 'vscode-languageclient/n
 
 export async function registerIdentity(client: LanguageClient): Promise<void> {
     client.onNotification(ssoTokenChangedRequestType.method, ssoTokenChangedHandler)
-    client.onTelemetry(e => window.showInformationMessage(`Telemetry: ${JSON.stringify(e)}`))
+    // client.onTelemetry(e => window.showInformationMessage(`Telemetry: ${JSON.stringify(e)}`))
 
     commands.registerCommand('aws.aws-lsp-identity.test', execTestCommand.bind(null, client))
 }

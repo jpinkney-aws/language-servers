@@ -4,7 +4,8 @@ import { CLEAR_QUICK_ACTION, HELP_QUICK_ACTION } from './chat/quickActions'
 import { TelemetryService } from './telemetryService'
 import { getUserAgent, makeUserContextObject } from './utilities/telemetryUtils'
 import { DEFAULT_AWS_Q_REGION, DEFAULT_AWS_Q_ENDPOINT_URL } from '../constants'
-import { FeatureDevController, SessionState } from './agents/featureDev/controller'
+import { FeatureDevController, SessionContext } from './agents/featureDev/controller'
+import { CodeWhispererServiceToken } from './codeWhispererService'
 
 export const QFeatureDevServer =
     (
@@ -12,15 +13,21 @@ export const QFeatureDevServer =
             credentialsProvider: CredentialsProvider,
             awsQRegion: string,
             awsQEndpointUrl: string
-        ) => ChatSessionManagementService<SessionState>
+        ) => ChatSessionManagementService<SessionContext>
     ): Server =>
     features => {
         const { chat, credentialsProvider, telemetry, logging, lsp, runtime, workspace } = features
 
         const awsQRegion = runtime.getConfiguration('AWS_Q_REGION') ?? DEFAULT_AWS_Q_REGION
         const awsQEndpointUrl = runtime.getConfiguration('AWS_Q_ENDPOINT_URL') ?? DEFAULT_AWS_Q_ENDPOINT_URL
-        const chatSessionManagementService: ChatSessionManagementService<SessionState> = service(
+        const chatSessionManagementService: ChatSessionManagementService<SessionContext> = service(
             credentialsProvider,
+            awsQRegion,
+            awsQEndpointUrl
+        )
+        const client = new CodeWhispererServiceToken(
+            credentialsProvider,
+            features.workspace,
             awsQRegion,
             awsQEndpointUrl
         )
@@ -34,7 +41,12 @@ export const QFeatureDevServer =
             awsQEndpointUrl
         )
 
-        const chatController = new FeatureDevController(chatSessionManagementService, features, telemetryService)
+        const chatController = new FeatureDevController(
+            client,
+            chatSessionManagementService,
+            features,
+            telemetryService
+        )
 
         lsp.addInitializer((params: InitializeParams) => {
             chatSessionManagementService.setCustomUserAgent(getUserAgent(params, runtime.serverInfo))

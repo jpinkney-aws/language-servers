@@ -27,8 +27,15 @@ export class ChatSessionService<T = {}> {
         this.#conversationId = value
     }
 
-    public get state(): T | undefined {
+    public get state(): T {
+        if (!this.#state) {
+            throw new Error('State has not been initialized')
+        }
         return this.#state
+    }
+
+    public set state(state: T) {
+        this.#state = state
     }
 
     constructor(

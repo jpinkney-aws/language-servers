@@ -42,7 +42,7 @@ export interface GenerateSuggestionsResponse {
 
 import CodeWhispererSigv4Client = require('../client/sigv4/codewhisperersigv4client')
 import CodeWhispererTokenClient = require('../client/token/codewhispererbearertokenclient')
-import { makeProxyConfig } from './utils'
+import { isAwsError, makeProxyConfig } from './utils'
 
 // Right now the only difference between the token client and the IAM client for codewhsiperer is the difference in function name
 // This abstract class can grow in the future to account for any additional changes across the clients
@@ -280,5 +280,33 @@ export class CodeWhispererServiceToken extends CodeWhispererServiceBase {
      */
     async sendTelemetryEvent(request: CodeWhispererTokenClient.SendTelemetryEventRequest) {
         return this.client.sendTelemetryEvent(request).promise()
+    }
+
+    /**
+     * @description Create a task assist conversation
+     */
+    async createTaskAssistConversation() {
+        try {
+            return this.client.createTaskAssistConversation().promise()
+        } catch (e) {
+            // if (isAwsError(e)) {
+            //     getLogger().error(
+            //         `${featureName}: failed to start conversation: ${e.message} RequestId: ${e.requestId}`
+            //     )
+            //     // BE service will throw ServiceQuota if conversation limit is reached. API Front-end will throw Throttling with this message if conversation limit is reached
+            //     if (
+            //         e.code === 'ServiceQuotaExceededException' ||
+            //         (e.code === 'ThrottlingException' && e.message.includes('reached for this month.'))
+            //     ) {
+            //         throw new MonthlyConversationLimitError(e.message)
+            //     }
+            //     throw new ApiError(e.message, 'CreateConversation', e.code, e.statusCode ?? 400)
+            // }
+
+            // throw new UnknownApiError(e instanceof Error ? e.message : 'Unknown error', 'CreateConversation')
+            return {
+                conversationId: `failed with ${e}`,
+            }
+        }
     }
 }

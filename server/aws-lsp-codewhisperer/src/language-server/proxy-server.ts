@@ -5,10 +5,12 @@ import { CodewhispererServerFactory } from './codeWhispererServer'
 import { CodeWhispererServiceIAM, CodeWhispererServiceToken } from './codeWhispererService'
 import { QNetTransformServerToken } from './netTransformServer'
 import { QChatServer } from './qChatServer'
+import { QFeatureDevServer } from './qFeatureDevServer'
 import { QConfigurationServerToken } from './configuration/qConfigurationServer'
 import { readFileSync } from 'fs'
 import { HttpsProxyAgent } from 'hpagent'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
+import { SessionContext } from './agents/featureDev/controller'
 
 export const CodeWhispererServerTokenProxy = CodewhispererServerFactory(
     (credentialsProvider, workspace, awsQRegion, awsQEndpointUrl) => {
@@ -63,6 +65,41 @@ export const QChatServerProxy = QChatServer((credentialsProvider, awsQRegion, aw
     }
 
     return ChatSessionManagementService.getInstance()
+        .withCredentialsProvider(credentialsProvider)
+        .withCodeWhispererEndpoint(awsQEndpointUrl)
+        .withCodeWhispererRegion(awsQRegion)
+        .withConfig(clientOptions)
+})
+
+export const FeatureDevServerProxy = QFeatureDevServer((credentialsProvider, awsQRegion, awsQEndpointUrl) => {
+    let clientOptions: ChatSessionServiceConfig | undefined
+    // short term solution to fix webworker bundling, broken due to this node.js specific logic in here
+    const isNodeJS: boolean = typeof process !== 'undefined' && process.release && process.release.name === 'node'
+    const proxyUrl = isNodeJS ? (process.env.HTTPS_PROXY ?? process.env.https_proxy) : undefined
+    const certs = isNodeJS
+        ? process.env.AWS_CA_BUNDLE
+            ? [readFileSync(process.env.AWS_CA_BUNDLE)]
+            : undefined
+        : undefined
+
+    if (proxyUrl) {
+        clientOptions = () => {
+            // this mimics aws-sdk-v3-js-proxy
+            const agent = new HttpsProxyAgent({
+                proxy: proxyUrl,
+                ca: certs,
+            })
+
+            return {
+                requestHandler: new NodeHttpHandler({
+                    httpAgent: agent,
+                    httpsAgent: agent,
+                }),
+            }
+        }
+    }
+
+    return ChatSessionManagementService.getInstance<SessionContext>()
         .withCredentialsProvider(credentialsProvider)
         .withCodeWhispererEndpoint(awsQEndpointUrl)
         .withCodeWhispererRegion(awsQRegion)
