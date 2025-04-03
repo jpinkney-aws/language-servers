@@ -66,6 +66,7 @@ export const createChat = (
 ) => {
     // eslint-disable-next-line semi
     let mynahApi: InboundChatApi
+    let savedContextCommands: MynahUIDataModel['contextCommands']
 
     const sendMessageToClient = (message: UiMessage | UiResultMessage | ServerMessage) => {
         clientApi.postMessage(message)
@@ -107,6 +108,15 @@ export const createChat = (
                 const allExistingTabs: MynahUITabStoreModel = mynahUi.getAllTabs()
                 for (const tabId in allExistingTabs) {
                     mynahUi.updateStore(tabId, chatConfig)
+                }
+                break
+            }
+            case 'UPDATE_WORKSPACE_CONTEXT': {
+                savedContextCommands = message.params
+                for (const tabID in mynahUi.getAllTabs()) {
+                    mynahUi.updateStore(tabID, {
+                        contextCommands: savedContextCommands,
+                    })
                 }
                 break
             }
