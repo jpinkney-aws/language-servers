@@ -14,7 +14,11 @@ import {
     ToolResultContentBlock,
     ToolUse,
 } from '@amzn/codewhisperer-streaming'
-import { chatRequestType, InlineChatResultParams } from '@aws/language-server-runtimes/protocol'
+import {
+    chatRequestType,
+    InlineChatResultParams,
+    PromptInputOptionChangeParams,
+} from '@aws/language-server-runtimes/protocol'
 import {
     ApplyWorkspaceEditParams,
     ErrorCodes,
@@ -260,7 +264,7 @@ export class AgenticChatController implements ChatHandlers {
             ChatTriggerType.MANUAL,
             this.#customizationArn,
             profileArn,
-            this.#features.agent.getTools({ format: 'bedrock' }),
+            this.#getTools(session),
             additionalContext
         )
 
@@ -928,6 +932,18 @@ export class AgenticChatController implements ChatHandlers {
         return chatEventParser.getResult()
     }
 
+    onPromptInputOptionChange(params: PromptInputOptionChangeParams) {
+        const sessionResult = this.#chatSessionManagementService.getSession(params.tabId)
+        const { data: session, success } = sessionResult
+
+        if (!success) {
+            this.#log('onPromptInputOptionChange: on valid session found')
+            return
+        }
+
+        session.pairProgrammingMode = !session.pairProgrammingMode
+    }
+
     updateConfiguration = (newConfig: AmazonQWorkspaceConfig) => {
         this.#customizationArn = newConfig.customizationArn
         this.#log(`Chat configuration updated customizationArn to ${this.#customizationArn}`)
@@ -940,6 +956,16 @@ export class AgenticChatController implements ChatHandlers {
         const updatedOptOutPreference = newConfig.optOutTelemetryPreference
         this.#telemetryService.updateOptOutPreference(updatedOptOutPreference)
         this.#log(`Chat configuration telemetry preference to ${updatedOptOutPreference}`)
+    }
+
+    #getTools(session: ChatSessionService) {
+        const tools = this.#features.agent.getTools({ format: 'bedrock' })
+
+        // it's disabled so filter out the write tools
+        if (!session.pairProgrammingMode) {
+            return tools.filter(tool => !['fsWrite', 'executeBash'].includes(tool.toolSpecification?.name || ''))
+        }
+        return tools
     }
 
     #log(...messages: string[]) {
